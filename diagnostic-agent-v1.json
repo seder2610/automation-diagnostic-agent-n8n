@@ -1,0 +1,274 @@
+{
+  "name": "diagnostic-agent-v1",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "id": "f555d9ef-87d4-4a19-b9eb-7b160e379727",
+      "name": "When chat message received",
+      "webhookId": "7d5b2bd3-2e55-4e92-8f19-59e1565871cd"
+    },
+    {
+      "parameters": {
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "type": "AIMessagePromptTemplate",
+              "message": "=Tu es un consultant automation (n8n + IA + Python) specialise PME/agences.\n\nMISSION\nGenerer un mini-diagnostic business exploitable commercialement.\n\nINPUT_BRUT\n{{ $json.chatInput }}\n\nREGLE INPUT\n- Si INPUT_BRUT est un JSON valide, utiliser les champs.\n- Sinon, considerer INPUT_BRUT comme description libre.\n\nCONTRAINTE\n- Diagnostic pragmatique, concret, court.\n- Pas de theorie.\n- Pas de promesse magique.\n- Chiffrage raisonnable.\n\nFORMAT DE SORTIE\nRetourner uniquement un JSON valide avec cette structure:\n\n{\n  \"diagnostic_summary\": \"2-4 phrases sur le vrai bottleneck\",\n  \"quick_wins\": [\n    {\n      \"title\": \"Nom quick win\",\n      \"impact_level\": \"high|medium|low\",\n      \"effort_level\": \"low|medium|high\",\n      \"expected_hours_saved_weekly\": 0,\n      \"implementation_note\": \"comment faire concretement en 1-2 phrases\"\n    }\n  ],\n  \"roi_estimate\": {\n    \"hours_saved_weekly\": 0,\n    \"hours_saved_monthly\": 0,\n    \"estimated_value_monthly_eur\": 0,\n    \"payback_period_weeks\": 0\n  },\n  \"plan_14_days\": [\n    \"Jour 1-2: ...\",\n    \"Jour 3-5: ...\",\n    \"Jour 6-10: ...\",\n    \"Jour 11-14: ...\"\n  ],\n  \"offer_recommendation\": {\n    \"recommended_option\": \"A|B\",\n    \"reason\": \"pourquoi cette option est la bonne\",\n    \"option_a_price_eur\": 900,\n    \"option_b_price_eur\": 1500\n  },\n  \"cta_message\": \"message court a envoyer au prospect pour proposer un sprint\"\n}\n\nRAPPEL\n- quick_wins doit contenir exactement 5 elements\n- style professionnel, simple, orienté execution\n"
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        272,
+        -32
+      ],
+      "id": "44bb6001-2508-493d-8e8e-821be9438c9d",
+      "name": "Basic LLM Chain",
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-4o-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        176,
+        224
+      ],
+      "id": "03c28eee-ce89-4414-afd0-aada05ca58ad",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "0mSlDjB6vA0sno02",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"diagnostic_summary\": \"Le goulot principal est...\",\n  \"quick_wins\": [\n    {\n      \"title\": \"Automatiser le reporting hebdo\",\n      \"impact_level\": \"high\",\n      \"effort_level\": \"medium\",\n      \"expected_hours_saved_weekly\": 4,\n      \"implementation_note\": \"Connecter sources et generer un rapport auto chaque lundi.\"\n    },\n    {\n      \"title\": \"Qualification leads automatique\",\n      \"impact_level\": \"high\",\n      \"effort_level\": \"low\",\n      \"expected_hours_saved_weekly\": 3,\n      \"implementation_note\": \"Scoring simple base sur source, budget, urgence.\"\n    },\n    {\n      \"title\": \"Relances prospects semi-auto\",\n      \"impact_level\": \"medium\",\n      \"effort_level\": \"low\",\n      \"expected_hours_saved_weekly\": 2,\n      \"implementation_note\": \"Relances J+2/J+5 avec templates dynamiques.\"\n    },\n    {\n      \"title\": \"Onboarding client checklists auto\",\n      \"impact_level\": \"medium\",\n      \"effort_level\": \"medium\",\n      \"expected_hours_saved_weekly\": 2,\n      \"implementation_note\": \"Creation de taches et docs a la signature.\"\n    },\n    {\n      \"title\": \"Alertes KPI hebdo\",\n      \"impact_level\": \"low\",\n      \"effort_level\": \"low\",\n      \"expected_hours_saved_weekly\": 1,\n      \"implementation_note\": \"Notifier seulement les ecarts importants.\"\n    }\n  ],\n  \"roi_estimate\": {\n    \"hours_saved_weekly\": 12,\n    \"hours_saved_monthly\": 48,\n    \"estimated_value_monthly_eur\": 1200,\n    \"payback_period_weeks\": 3\n  },\n  \"plan_14_days\": [\n    \"Jour 1-2: cadrage et mapping process\",\n    \"Jour 3-5: build workflow principal\",\n    \"Jour 6-10: integrations + tests\",\n    \"Jour 11-14: passation + optimisation\"\n  ],\n  \"offer_recommendation\": {\n    \"recommended_option\": \"A\",\n    \"reason\": \"priorite au process qui fait perdre le plus d'heures\",\n    \"option_a_price_eur\": 900,\n    \"option_b_price_eur\": 1500\n  },\n  \"cta_message\": \"Si tu veux, je te propose un sprint de 2 semaines pour implementer les quick wins prioritaires.\"\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        480,
+        256
+      ],
+      "id": "1795c5de-6a3c-4c63-b924-c5cf87637bd5",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "jsCode": "const o = $json.output || {};\n\nconst quickWins = Array.isArray(o.quick_wins) ? o.quick_wins : [];\nconst roi = o.roi_estimate || {};\nconst offer = o.offer_recommendation || {};\n\nreturn [{\n  json: {\n    timestamp: new Date().toISOString(),\n    diagnostic_summary: o.diagnostic_summary || \"\",\n    quick_wins_count: quickWins.length,\n    quick_wins: quickWins,\n    roi_hours_monthly: roi.hours_saved_monthly || 0,\n    roi_value_monthly_eur: roi.estimated_value_monthly_eur || 0,\n    recommended_option: offer.recommended_option || \"A\",\n    cta_message: o.cta_message || \"\"\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        624,
+        -32
+      ],
+      "id": "d85e0b9b-78a8-4949-acf1-41242db986e5",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "dataTableId": {
+          "__rl": true,
+          "value": "zEXDiEGHy0Eaolvx",
+          "mode": "list",
+          "cachedResultName": "diagnostic_logs",
+          "cachedResultUrl": "/projects/O48fUNDZU5TZg9CD/datatables/zEXDiEGHy0Eaolvx"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "quick_wins_count": "={{ $json.quick_wins_count }}",
+            "roi_hours_monthly": "={{ $json.roi_hours_monthly }}",
+            "timestamp": "={{ $json.timestamp }}",
+            "diagnostic_summary": "={{ $json.diagnostic_summary }}",
+            "roi_value_monthly_eur": "={{ $json.roi_value_monthly_eur }}",
+            "cta_message": "={{ $json.cta_message }}",
+            "recommended_option": "={{ $json.recommended_option }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "timestamp",
+              "displayName": "timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "diagnostic_summary",
+              "displayName": "diagnostic_summary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "quick_wins_count",
+              "displayName": "quick_wins_count",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "roi_hours_monthly",
+              "displayName": "roi_hours_monthly",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "roi_value_monthly_eur",
+              "displayName": "roi_value_monthly_eur",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "cta_message",
+              "displayName": "cta_message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "recommended_option",
+              "displayName": "recommended_option",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {
+          "optimizeBulk": false
+        }
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1040,
+        -32
+      ],
+      "id": "e5021318-1138-4b27-b4da-4b635fd39fb9",
+      "name": "Insert row"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Insert row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "439c535e-6583-4564-8b8a-54d429cec6e2",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "8de05d949969a659e072d4bcb18833217088befbaf87b7c837dff10c9d96ecd7"
+  },
+  "id": "CSSwCYBwopU8PDyg",
+  "tags": []
+}

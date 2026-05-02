@@ -48,8 +48,11 @@ JSON recommande:
 2. `Basic LLM Chain`
 3. `OpenAI Chat Model`
 4. `Structured Output Parser`
-5. `Code in JavaScript` (normalisation + fallback)
-6. `Data Table -> Insert row` (`diagnostic_logs`)
+5. `Code in JavaScript` (normalisation + texte client pour Notion)
+6. `Data Table -> Insert row` (`diagnostic_logs`) — suivi interne
+7. `Notion` → **Create diagnostic page** — livrable prospect (voir `notion-schema.md`)
+
+Import workflow : `diagnostic-agent-v1.json` (remplacer l’ID database Notion placeholder par le tien).
 
 ## Pourquoi cette demo vend mieux que la demo #1
 

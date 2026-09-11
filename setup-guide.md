@@ -80,8 +80,8 @@
   "offer_recommendation": {
     "recommended_option": "A",
     "reason": "priorite au process qui fait perdre le plus d'heures",
-    "option_a_price_eur": 900,
-    "option_b_price_eur": 1500
+    "option_a_price_eur": 2000,
+    "option_b_price_eur": 3000
   },
   "cta_message": "Si tu veux, je te propose un sprint de 2 semaines pour implementer les quick wins prioritaires."
 }
@@ -151,7 +151,7 @@ const rapportParts = [
   "",
   "Recommandation",
   `Option ${opt} — ${offer.reason || ""}`,
-  `Sprint essentiel: ${offer.option_a_price_eur ?? 900} EUR · Sprint complet: ${offer.option_b_price_eur ?? 1500} EUR`,
+  `Sprint essentiel: ${offer.option_a_price_eur ?? 2000} EUR · Sprint complet: ${offer.option_b_price_eur ?? 3000} EUR`,
   "",
   "Prochaine étape",
   o.cta_message || "",

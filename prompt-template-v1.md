@@ -45,8 +45,8 @@ Retourner uniquement un JSON valide avec cette structure:
   "offer_recommendation": {
     "recommended_option": "A|B",
     "reason": "pourquoi cette option est la bonne",
-    "option_a_price_eur": 900,
-    "option_b_price_eur": 1500
+    "option_a_price_eur": 2000,
+    "option_b_price_eur": 3000
   },
   "cta_message": "message court a envoyer au prospect pour proposer un sprint"
 }

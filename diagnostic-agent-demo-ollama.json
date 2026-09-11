@@ -1,0 +1,185 @@
+{
+  "name": "Diagnostic Automation — Démo Ollama local",
+  "nodes": [
+    {
+      "id": "da-sticky",
+      "name": "📋 Démo portfolio",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [80, 40],
+      "parameters": {
+        "width": 420,
+        "height": 160,
+        "content": "## Démo — IA locale (Ollama)\n\n▶️ Lancer → page Notion (si creds OK)\n\n**Prod client** : `diagnostic-agent-v1.json` (OpenAI structuré)\n\nPrérequis : `ollama serve` + `qwen2.5:14b`"
+      }
+    },
+    {
+      "id": "da-trigger",
+      "name": "Lancer diagnostic démo",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [80, 280],
+      "parameters": {}
+    },
+    {
+      "id": "da-config",
+      "name": "⚙️ Configuration",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [320, 280],
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            {
+              "id": "c-url",
+              "name": "ollama_url",
+              "value": "http://host.docker.internal:11434",
+              "type": "string"
+            },
+            {
+              "id": "c-model",
+              "name": "ollama_model",
+              "value": "qwen2.5:14b",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "da-input",
+      "name": "Contexte prospect (exemple)",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [560, 280],
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "{\n  \"niche\": \"marketing\",\n  \"company_name\": \"Agence Demo SEA\",\n  \"team_size\": \"12\",\n  \"tools\": [\"Notion\", \"Google Sheets\", \"Slack\"],\n  \"current_pains\": [\n    \"reporting mensuel manuel\",\n    \"alertes budget tardives\",\n    \"onboarding client repetitif\"\n  ],\n  \"hours_lost_per_week\": 14\n}"
+      }
+    },
+    {
+      "id": "da-prompt",
+      "name": "Préparer prompt Ollama",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [800, 280],
+      "parameters": {
+        "jsCode": "const cfg = $('⚙️ Configuration').first().json;\nconst input = $input.first().json;\nconst rawIn = JSON.stringify(input, null, 2);\n\nconst systemMsg = `Tu es consultant automation (n8n + IA) pour agences SEA françaises.\nRéponds UNIQUEMENT avec un JSON valide, sans markdown, sans texte avant ou après.`;\n\nconst userMsg = `Génère un mini-diagnostic business.\n\nINPUT:\n${rawIn}\n\nSTRUCTURE JSON EXACTE:\n{\n  \"diagnostic_summary\": \"2-4 phrases\",\n  \"quick_wins\": [\n    {\"title\":\"...\",\"impact_level\":\"high|medium|low\",\"effort_level\":\"low|medium|high\",\"expected_hours_saved_weekly\":0,\"implementation_note\":\"...\"}\n  ],\n  \"roi_estimate\": {\"hours_saved_weekly\":0,\"hours_saved_monthly\":0,\"estimated_value_monthly_eur\":0,\"payback_period_weeks\":0},\n  \"plan_14_days\": [\"Jour 1-2: ...\",\"Jour 3-5: ...\",\"Jour 6-10: ...\",\"Jour 11-14: ...\"],\n  \"offer_recommendation\": {\"recommended_option\":\"A|B\",\"reason\":\"...\",\"option_a_price_eur\":2000,\"option_b_price_eur\":3000},\n  \"cta_message\": \"phrase courte\"\n}\n\nRègles: exactement 5 quick_wins; prix A=2000 B=3000; chiffrage réaliste.`;\n\nconst ollama_request = {\n  model: cfg.ollama_model || 'qwen2.5:14b',\n  messages: [\n    { role: 'system', content: systemMsg },\n    { role: 'user', content: userMsg }\n  ],\n  stream: false,\n  options: { temperature: 0.3, num_predict: 1200 }\n};\n\nconst url = (cfg.ollama_url || 'http://host.docker.internal:11434').replace(/\\/$/, '');\n\nreturn [{\n  json: {\n    ...input,\n    ollama_url: url,\n    ollama_request\n  }\n}];"
+      }
+    },
+    {
+      "id": "da-ollama",
+      "name": "IA — Ollama local",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1040, 280],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $json.ollama_url + '/api/chat' }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [{ "name": "Content-Type", "value": "application/json" }]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "specifyBody": "json",
+        "jsonBody": "={{ $json.ollama_request }}",
+        "options": { "timeout": 180000 }
+      },
+      "continueOnFail": true
+    },
+    {
+      "id": "da-parse",
+      "name": "Parser JSON diagnostic",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1280, 280],
+      "parameters": {
+        "jsCode": "const ctx = $('Préparer prompt Ollama').first().json;\nconst raw = $input.first().json ?? {};\nlet text = raw?.message?.content || raw?.response || '';\nif (typeof text !== 'string') text = JSON.stringify(text);\n\ntext = text.trim();\nif (text.startsWith('```')) {\n  text = text.replace(/```json?\\n?/gi, '').replace(/```$/g, '').trim();\n}\n\nlet o = {};\ntry {\n  const start = text.indexOf('{');\n  const end = text.lastIndexOf('}');\n  if (start >= 0 && end > start) {\n    o = JSON.parse(text.slice(start, end + 1));\n  } else {\n    throw new Error('Pas de JSON');\n  }\n} catch (e) {\n  o = {\n    diagnostic_summary: 'Diagnostic partiel — compléter manuellement (réponse IA non structurée).',\n    quick_wins: [],\n    roi_estimate: {},\n    plan_14_days: [],\n    offer_recommendation: { recommended_option: 'A', option_a_price_eur: 2000, option_b_price_eur: 3000 },\n    cta_message: 'Proposer un sprint automation de 2 semaines.'\n  };\n}\n\nreturn [{ json: { output: o, company_name: ctx.company_name, niche: ctx.niche } }];"
+      }
+    },
+    {
+      "id": "da-format",
+      "name": "Formater livrable Notion",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1520, 280],
+      "parameters": {
+        "jsCode": "const o = $json.output || {};\nconst companyName = $json.company_name || '';\nconst niche = $json.niche || '';\n\nconst quickWins = Array.isArray(o.quick_wins) ? o.quick_wins : [];\nconst roi = o.roi_estimate || {};\nconst offer = o.offer_recommendation || {};\n\nconst d = new Date();\nconst dateStr = d.toISOString().slice(0, 10);\nconst pageTitle = companyName ? `Diagnostic — ${companyName} — ${dateStr}` : `Diagnostic — ${dateStr}`;\n\nconst impactLabel = { high: 'Élevé', medium: 'Moyen', low: 'Faible' };\nconst effortLabel = { low: 'Faible', medium: 'Moyen', high: 'Élevé' };\n\nconst qwLines = quickWins.map((w, i) => {\n  const imp = impactLabel[w.impact_level] || w.impact_level || '';\n  const ef = effortLabel[w.effort_level] || w.effort_level || '';\n  const h = w.expected_hours_saved_weekly || 0;\n  const note = (w.implementation_note || '').trim();\n  return `${i + 1}. ${w.title || 'Quick win'}\\n   Impact: ${imp} · Effort: ${ef} · ~${h} h/sem.\\n   ${note}`;\n});\n\nconst plan = Array.isArray(o.plan_14_days) ? o.plan_14_days : [];\nconst planLines = plan.map((line) => `- ${line}`).join('\\n');\nconst opt = offer.recommended_option || 'A';\n\nconst rapportParts = [\n  'Mini-diagnostic automation (démo IA locale)',\n  niche ? `Contexte: ${niche}` : null,\n  '',\n  'Synthèse',\n  o.diagnostic_summary || '',\n  '',\n  '5 quick wins',\n  qwLines.join('\\n\\n') || '(à compléter)',\n  '',\n  'Estimation ROI',\n  `Heures économisées / mois: ${roi.hours_saved_monthly ?? 0}`,\n  `Valeur estimée / mois: ${roi.estimated_value_monthly_eur ?? 0} EUR`,\n  `Retour indicatif: ~${roi.payback_period_weeks ?? 0} semaine(s)`,\n  '',\n  'Plan 14 jours',\n  planLines,\n  '',\n  'Recommandation',\n  `Option ${opt} — ${offer.reason || ''}`,\n  `Sprint essentiel: ${offer.option_a_price_eur ?? 2000} EUR · Sprint complet: ${offer.option_b_price_eur ?? 3000} EUR`,\n  '',\n  'Prochaine étape',\n  o.cta_message || ''\n];\n\nconst notionRapport = rapportParts.filter((x) => x !== null).join('\\n');\n\nreturn [{\n  json: {\n    timestamp: d.toISOString(),\n    diagnostic_summary: o.diagnostic_summary || '',\n    quick_wins_count: quickWins.length,\n    quick_wins: quickWins,\n    roi_hours_monthly: roi.hours_saved_monthly || 0,\n    roi_value_monthly_eur: roi.estimated_value_monthly_eur || 0,\n    recommended_option: opt,\n    cta_message: o.cta_message || '',\n    company_name: companyName,\n    page_title: pageTitle,\n    notion_rapport: notionRapport,\n    ai_provider: 'ollama-local'\n  }\n}];"
+      }
+    },
+    {
+      "id": "da-notion",
+      "name": "Créer page Notion",
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2.2,
+      "position": [1760, 280],
+      "parameters": {
+        "resource": "databasePage",
+        "operation": "create",
+        "databaseId": {
+          "__rl": true,
+          "value": "REMPLACER_PAR_ID_DATABASE_NOTION",
+          "mode": "id"
+        },
+        "title": "={{ $json.page_title }}",
+        "propertiesUi": {
+          "propertyValues": [
+            {
+              "key": "Name|title",
+              "title": "={{ $json.page_title }}"
+            },
+            {
+              "key": "Rapport Client|rich_text",
+              "textContent": "={{ $json.notion_rapport }}"
+            }
+          ]
+        }
+      },
+      "continueOnFail": true
+    },
+    {
+      "id": "da-done",
+      "name": "Résumé démo",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2000, 280],
+      "parameters": {
+        "jsCode": "const d = $('Formater livrable Notion').first().json;\nreturn [{\n  json: {\n    success: true,\n    company: d.company_name,\n    quick_wins: d.quick_wins_count,\n    recommended: d.recommended_option,\n    summary: d.diagnostic_summary,\n    ai: 'ollama-local',\n    message: `Diagnostic démo généré pour ${d.company_name} — ${d.quick_wins_count} quick wins`\n  }\n}];"
+      }
+    }
+  ],
+  "connections": {
+    "Lancer diagnostic démo": {
+      "main": [[{ "node": "⚙️ Configuration", "type": "main", "index": 0 }]]
+    },
+    "⚙️ Configuration": {
+      "main": [[{ "node": "Contexte prospect (exemple)", "type": "main", "index": 0 }]]
+    },
+    "Contexte prospect (exemple)": {
+      "main": [[{ "node": "Préparer prompt Ollama", "type": "main", "index": 0 }]]
+    },
+    "Préparer prompt Ollama": {
+      "main": [[{ "node": "IA — Ollama local", "type": "main", "index": 0 }]]
+    },
+    "IA — Ollama local": {
+      "main": [[{ "node": "Parser JSON diagnostic", "type": "main", "index": 0 }]]
+    },
+    "Parser JSON diagnostic": {
+      "main": [[{ "node": "Formater livrable Notion", "type": "main", "index": 0 }]]
+    },
+    "Formater livrable Notion": {
+      "main": [[{ "node": "Créer page Notion", "type": "main", "index": 0 }]]
+    },
+    "Créer page Notion": {
+      "main": [[{ "node": "Résumé démo", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Europe/Paris"
+  },
+  "versionId": "diagnostic-demo-ollama-v1",
+  "tags": ["demo", "ollama", "diagnostic", "gratuit"]
+}

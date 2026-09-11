@@ -1,74 +1,59 @@
-# Demo #2 - Diagnostic Automation Agent (n8n)
+# Diagnostic Automation Agent (n8n)
 
-Deuxieme demo orientee vente: produire un mini-audit automation a partir d'un contexte entreprise.
+Deuxième démo orientée vente : mini-audit automation avec 5 quick wins chiffrés.
+
+## Quel fichier importer ?
+
+| Fichier | Contexte | IA |
+|---------|----------|-----|
+| **`diagnostic-agent-demo-ollama.json`** | **Loom / démo portfolio** | **Ollama local** (0 €) |
+| `diagnostic-agent-v1.json` | **Prod / usage réel** | OpenAI GPT-4o-mini (JSON structuré fiable) |
+
+> Vision complète démo vs prod : [`../VISION-CLIENT-COMPLETE.md`](../VISION-CLIENT-COMPLETE.md)
+
+---
 
 ## Objectif business
 
-Transformer un prospect "curieux" en prospect "chaud" avec un livrable concret:
-- 5 quick wins classes par impact
+Transformer un prospect « curieux » en prospect « chaud » :
+
+- 5 quick wins classés par impact
 - estimation ROI simple
 - plan d'action 14 jours
-- proposition de sprint payant
+- proposition sprint 2 000 € / 3 000 €
 
-Cette demo sert d'entree naturelle vers l'offre:
-- Option A: Sprint essentiel (900 EUR)
-- Option B: Sprint complet (1500 EUR)
+---
 
-## Entree attendue (chat n8n)
+## Démo Ollama (5 min)
 
-JSON recommande:
-
-```json
-{
-  "niche": "marketing",
-  "company_name": "Agence X",
-  "team_size": "8",
-  "tools": ["Notion", "HubSpot", "Google Sheets"],
-  "current_pains": [
-    "reporting manuel",
-    "prospection lente",
-    "onboarding client repetitif"
-  ],
-  "hours_lost_per_week": 12
-}
+```bash
+ollama serve
+ollama list   # qwen2.5:14b
 ```
 
-## Sortie attendue
+1. n8n → Import → `diagnostic-agent-demo-ollama.json`
+2. `ollama_url` : `http://host.docker.internal:11434` si n8n Docker
+3. ▶️ **Lancer diagnostic démo**
+4. Lire **Résumé démo** (+ page Notion si creds configurées)
 
-- diagnostic_summary (string)
-- quick_wins (array 5 objets)
-- roi_estimate (objet)
-- plan_14_days (array)
-- offer_recommendation (objet)
-- cta_message (string)
+Entrée exemple déjà dans le workflow (agence SEA 12 personnes). Modifier le nœud **Contexte prospect** pour un autre cas.
 
-## Architecture n8n (V1)
+---
 
-1. `When chat message received`
-2. `Basic LLM Chain`
-3. `OpenAI Chat Model`
-4. `Structured Output Parser`
-5. `Code in JavaScript` (normalisation + texte client pour Notion)
-6. `Data Table -> Insert row` (`diagnostic_logs`) — suivi interne
-7. `Notion` → **Create diagnostic page** — livrable prospect (voir `notion-schema.md`)
+## Production (`diagnostic-agent-v1.json`)
 
-Import workflow : `diagnostic-agent-v1.json` (remplacer l’ID database Notion placeholder par le tien).
+Architecture LangChain :
 
-## Pourquoi cette demo vend mieux que la demo #1
+1. Chat trigger
+2. Basic LLM Chain + OpenAI + Structured Output Parser
+3. Code → Notion + Data Table
 
-- Demo #1 montre "capabilite technique"
-- Demo #2 montre "valeur business + argent/temps gagne"
-- Le prospect visualise directement son ROI
+Voir `setup-guide.md` et `notion-schema.md`.
 
-## Tests minimum avant usage client
+---
 
-Tester sur 3 cas:
-1. Agence marketing (5-15 personnes)
-2. Integrateur Odoo (3-10 personnes)
-3. PME service (operations manuelles)
+## Tests minimum (prod)
 
-Definition de done:
-- JSON propre
-- Quick wins actionnables (pas de blabla)
-- ROI coherent
-- CTA naturel vers sprint
+3 cas : agence marketing · intégrateur Odoo · PME service.
+
+Done = JSON propre · 5 quick wins · ROI cohérent · CTA sprint.

@@ -20,7 +20,7 @@
         "resource": "databasePage",
         "databaseId": {
           "__rl": true,
-          "value": "https://www.notion.so/354e27a7f3e38076b585fcc755688d34?v=354e27a7f3e3806caee3000cfcf73860&source=copy_link",
+          "value": "https://www.notion.so/REMPLACER_PAR_ID_BASE_NOTION?v=354e27a7f3e3806caee3000cfcf73860&source=copy_link",
           "mode": "url"
         },
         "simple": false,

@@ -9,8 +9,6 @@ Deuxième démo orientée vente : mini-audit automation avec 5 quick wins chiffr
 | **`diagnostic-agent-demo-ollama.json`** | **Loom / démo portfolio** | **Ollama local** (0 €) |
 | `diagnostic-agent-v1.json` | **Prod / usage réel** | OpenAI GPT-4o-mini (JSON structuré fiable) |
 
-> Vision complète démo vs prod : [`../VISION-CLIENT-COMPLETE.md`](../VISION-CLIENT-COMPLETE.md)
-
 ---
 
 ## Objectif business
